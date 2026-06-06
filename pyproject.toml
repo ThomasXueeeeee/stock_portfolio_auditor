@@ -63,7 +63,7 @@ dev = [
   "pytest-cov>=7,<8",
   "pytest-snapshot>=0.9,<1",
   "pytest-xdist>=3,<4",
-  "reportlab>=3.6,<4",
+  "reportlab>=3.6,<5",
   "ruff>=0.15,<1",
 ]
 docs = [
