@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ schema.title }}</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111827;
+      --panel-2: #0f172a;
+      --border: #1f2937;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-dim: #1e3a5f;
+      --good: #22c55e;
+      --bad: #ef4444;
+    }
+    body { font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; color: var(--text); background: var(--bg); }
+    header.report-header { position: sticky; top: 0; background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 24px; z-index: 10; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 13px; }
+    header.report-header strong { font-size: 14px; }
+    header.report-header .meta { color: var(--muted); }
+    header.report-header .badge { color: var(--accent); }
+    main { max-width: 1180px; margin: 0 auto; padding: 24px; }
+    section { background: var(--panel); margin: 0 0 20px; padding: 20px 24px; border-radius: 10px; border: 1px solid var(--border); }
+    section h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
+    section h2 { font-size: 17px; margin: 0 0 12px; letter-spacing: -0.01em; }
+    section h3 { font-size: 14px; margin: 0 0 8px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+    .exec-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; }
+    @media (max-width: 1000px) { .exec-grid { grid-template-columns: 1fr; } }
+    .narrative-block { margin: 0 0 14px; }
+    .narrative-block h4 { font-size: 12px; margin: 0 0 4px; color: var(--accent); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+    .narrative-block p { font-size: 14px; line-height: 1.55; margin: 0; color: var(--text); }
+    .kpi-list { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: 13px; }
+    .kpi-list h3 { margin: 4px 0 8px; font-size: 11px; }
+    .kpi-list .row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dotted var(--border); }
+    .kpi-list .row:last-child { border-bottom: none; }
+    .kpi-list .label { color: var(--muted); }
+    .kpi-list .value { font-variant-numeric: tabular-nums; font-weight: 600; }
+    .kpi-list .pos { color: var(--good); }
+    .kpi-list .neg { color: var(--bad); }
+    table.summary { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+    table.summary th, table.summary td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: right; }
+    table.summary th:first-child, table.summary td:first-child { text-align: left; }
+    table.summary thead th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; }
+    table.summary tr.total { font-weight: 700; background: var(--panel-2); }
+    .chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .chart-card { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; }
+    .chart-card.wide { grid-column: 1 / -1; }
+    .chart-card h2 { margin: 0 0 4px; font-size: 14px; }
+    .pos { color: var(--good); }
+    .neg { color: var(--bad); }
+    .footnote { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    ul.notes { font-size: 13px; line-height: 1.55; padding-left: 20px; margin: 6px 0; }
+    ul.notes li { margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <header class="report-header">
+    <strong>{{ schema.title }}</strong>
+    <span class="meta">Accounts: {{ schema.accounts | join(", ") }}</span>
+    <span><span class="meta">Data as of</span> <span class="badge">{{ schema.period_end.strftime("%b %d, %Y") }}</span></span>
+    <span class="meta">Audit window: {{ schema.period_start.strftime("%b %Y") }} &rarr; {{ schema.period_end.strftime("%b %Y") }}</span>
+    <span class="meta">Base: {{ schema.base_currency }}</span>
+  </header>
+  <main>
+
+    {# ---------------------- Executive Summary ---------------------- #}
+    <section>
+      <h1>Executive Summary</h1>
+      <div class="footnote">All metrics, charts and balances reflect statement data from <strong>{{ schema.period_start.strftime("%b %d, %Y") }}</strong> through <strong>{{ schema.period_end.strftime("%b %d, %Y") }}</strong>. The audit window is set explicitly by the operator (<code>--start-date</code> / <code>--end-date</code>); broker statements whose period overflows either boundary are clipped to the in-window slice (transactions are date-filtered; per-symbol realized PnL is rebuilt from in-window dispositions whenever the source publishes per-trade data).</div>
+      <details style="margin-top:14px; font-size:13px;">
+        <summary style="cursor:pointer; color: var(--accent); font-weight:600;">Required data sources per account</summary>
+        <ul class="notes" style="margin-top:8px;">
+          <li><strong>Schwab taxable brokerage</strong> &mdash; closed tax years up through 2024: use the annual <em>Form 1099 Composite and Year-End Summary</em> (one PDF per tax year). From tax year 2025 onward: use the monthly Brokerage Statement PDFs. <em>Why the split:</em> Schwab's pre-2025 monthly statements collapse stock realized PnL into a single aggregate line with no per-symbol detail; the 1099 is the only document that publishes per-lot realized data for those years. Starting 2025 the monthly statement gained a per-symbol <em>Realized Gain/(Loss)</em> column, so monthly is sufficient.</li>
+          <li><strong>Schwab IRA &amp; Roth IRA</strong> &mdash; monthly Brokerage Statement PDFs for every period. The IRA / Roth statements publish a per-symbol <em>Gain or (Loss) on Investments Sold</em> table on every monthly statement, so no 1099 is needed (1099-B isn't issued for tax-advantaged accounts anyway).</li>
+          <li><strong>Interactive Brokers (any account type)</strong> &mdash; the only IBKR document this tool parses is the <em>Activity Statement</em> (CSV preferred). For each closed prior calendar year, supply a <em>yearly</em> Activity Statement (period <code>Jan 1 &ndash; Dec 31</code>). For the current in-progress year, supply <em>month-by-month</em> Activity Statements (one CSV per finished month). <em>Do not</em> use a YTD Activity Statement that extends past your audit end date: the <em>Mark-to-Market Performance Summary</em> mixes realized and unrealized PnL into a single per-symbol number per period, which cannot be split per-trade. The audit-window filter still accepts a YTD statement on a best-effort basis (the per-trade <code>Trades</code> section is clipped by date) but the unrealized portion of the last few weeks cannot be removed without external pricing data, so the per-symbol totals over-attribute.</li>
+          <li><strong>Other brokers</strong> (Fidelity, Robinhood, etc.) are not supported yet &mdash; their statements will be skipped during ingestion. Schwab trade-log / transaction-history CSV exports are also unsupported: they list prices but omit commissions, option premiums, lot detail, and corporate-action adjustments.</li>
+        </ul>
+      </details>
+      <div class="exec-grid" style="margin-top:16px;">
+        <div class="narrative">
+          {{ schema.narrative | safe }}
+        </div>
+        <div class="kpi-list">
+          <h3>Key Metrics</h3>
+          <div class="row"><span class="label">TWR (annualized)</span><span class="value {% if schema.kpis.twr >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f%%"|format(schema.kpis.twr * 100) }}</span></div>
+          <div class="row"><span class="label">MWR-IRR (annualized)</span><span class="value {% if schema.kpis.mwr_irr >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f%%"|format(schema.kpis.mwr_irr * 100) }}</span></div>
+          {% if schema.include_dollar_amounts %}
+          <div class="row"><span class="label">Total $ P&amp;L</span><span class="value {% if schema.kpis.total_pnl >= 0 %}pos{% else %}neg{% endif %}">${{ "{:,.0f}".format(schema.kpis.total_pnl) }}</span></div>
+          {% endif %}
+          <div class="row"><span class="label">Max drawdown</span><span class="value neg">{{ "%.2f%%"|format(schema.kpis.max_drawdown * 100) }}</span></div>
+          <div class="row"><span class="label">Sharpe ratio</span><span class="value">{{ "%.2f"|format(schema.kpis.sharpe) }}</span></div>
+          <div class="row"><span class="label">Sortino ratio</span><span class="value">{{ "%.2f"|format(schema.kpis.sortino) }}</span></div>
+          <div class="row"><span class="label">Calmar ratio</span><span class="value">{{ "%.2f"|format(schema.kpis.calmar) }}</span></div>
+          <div class="row"><span class="label">Cost drag</span><span class="value neg">{{ "%.0f"|format(schema.kpis.tcost_bps) }} bps</span></div>
+          <div class="row"><span class="label">Avg annual turnover</span><span class="value">{{ "%.0f%%"|format(schema.kpis.turnover * 100) }}</span></div>
+          <div class="row"><span class="label">Beta vs {{ schema.kpis.primary_benchmark_ticker or "benchmark" }}</span><span class="value">{% if schema.kpis.beta is not none %}{{ "%.2f"|format(schema.kpis.beta) }}{% else %}&mdash;{% endif %}</span></div>
+          <div class="row"><span class="label">Alpha (ann.) vs {{ schema.kpis.primary_benchmark_ticker or "benchmark" }}</span><span class="value {% if schema.kpis.alpha is not none and schema.kpis.alpha >= 0 %}pos{% elif schema.kpis.alpha is not none %}neg{% endif %}">{% if schema.kpis.alpha is not none %}{{ "%.2f%%"|format(schema.kpis.alpha * 100) }}{% else %}&mdash;{% endif %}</span></div>
+          <div class="row"><span class="label">Information ratio</span><span class="value {% if schema.kpis.info_ratio is not none and schema.kpis.info_ratio >= 0 %}pos{% elif schema.kpis.info_ratio is not none %}neg{% endif %}">{% if schema.kpis.info_ratio is not none %}{{ "%.2f"|format(schema.kpis.info_ratio) }}{% else %}&mdash;{% endif %}</span></div>
+        </div>
+      </div>
+    </section>
+
+    {# ---------------------- Yearly Summary ---------------------- #}
+    <section>
+      <h2>Yearly Summary</h2>
+      <p class="footnote">TWR is chain-linked pooled monthly return within the period; MWR is Modified Dietz period return, dollar-weighted by your actual deposits and withdrawals. Neither yearly column is annualised; the Total row's MWR is annualised XIRR over the full audit window. <strong>Turnover</strong> is two-way: each month's ratio is <em>(buys + sells) / 2</em> divided by that month's average NAV, summed across the row's in-window months. The two-way formula (instead of the SEC's <em>min(buys, sells)</em> used on Form N-1A) captures one-way deployment activity as half-turnover, which is the right behaviour for a personal portfolio where there is no fund-flow noise to filter out; summing monthly ratios weights each month's trading by the NAV at the time it happened. Per-year rows show the activity in that year's in-window months without extrapolation; the Total row is the sum of the per-year ratios divided by the number of years in the audit window. <strong>Eff. N</strong> is the average monthly effective number of equal-weighted positions (the reciprocal of the Herfindahl-Hirschman Index over stock-only USD-translated weights); <strong>Top-5</strong> is the average monthly cumulative weight of the five largest stock positions. Beta / alpha / information ratio are reported once on the Executive Summary's Key Metrics panel for the full audit window only -- short partial-year rows regress on too few observations to produce a stable point estimate.</p>
+      <table class="summary">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>TWR</th>
+            <th>MWR</th>
+            <th>Sharpe</th>
+            <th>Max DD</th>
+            <th>Best mo.</th>
+            <th>Worst mo.</th>
+            <th>Turnover</th>
+            <th>Eff. N</th>
+            <th>Top-5</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in schema.yearly_summary %}
+          <tr {% if row.label == "Total" %}class="total"{% endif %}>
+            <td>{{ row.label }}</td>
+            <td class="{% if row.twr >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f%%"|format(row.twr * 100) }}</td>
+            <td class="{% if row.mwr_irr >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f%%"|format(row.mwr_irr * 100) }}</td>
+            <td>{{ "%.2f"|format(row.sharpe) }}</td>
+            <td class="neg">{{ "%.2f%%"|format(row.max_drawdown * 100) }}</td>
+            <td class="pos">{{ "%.2f%%"|format(row.best_month * 100) }}</td>
+            <td class="neg">{{ "%.2f%%"|format(row.worst_month * 100) }}</td>
+            <td>{{ "%.0f%%"|format(row.turnover * 100) }}</td>
+            <td>{% if row.avg_effective_n > 0 %}{{ "%.1f"|format(row.avg_effective_n) }}{% else %}&mdash;{% endif %}</td>
+            <td>{% if row.avg_top5_share > 0 %}{{ "%.0f%%"|format(row.avg_top5_share * 100) }}{% else %}&mdash;{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    {# ---------------------- Charts ---------------------- #}
+    {# Charts that quote absolute dollar amounts on their axis (NAV vs
+       cash flows, dollar PnL waterfall / decomposition, option premium
+       income, contribution waterfall) are hidden when the operator
+       passes ``include_dollar_amounts=False``. The bps decomposition,
+       cumulative-return, and concentration charts stay because they
+       are all expressed in unit-free terms. #}
+    {% set dollar_chart_keys = ['value_vs_contributions', 'decomposition_dollars', 'option_income_by_underlying', 'pnl_waterfall'] %}
+    <section>
+      <h2>Performance Charts</h2>
+      <div class="chart-grid">
+        {% for chart in schema.charts if chart.key != "option_income_by_underlying" %}
+          {% if schema.include_dollar_amounts or chart.key not in dollar_chart_keys %}
+          <div class="chart-card {% if chart.key in ['value_vs_contributions', 'cumulative_return', 'concentration_over_time'] %}wide{% endif %}">
+            <h2>{{ chart.title }}</h2>
+            {{ chart.html | safe }}
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </section>
+
+    {# ---------------------- Top Contributors / Detractors ---------------------- #}
+    {% if schema.top_contributors or schema.top_detractors %}
+    <section>
+      <h2>Top Contributors &amp; Detractors</h2>
+      <p class="footnote">
+        Per-position dollar P&amp;L is the <strong>stock investment</strong> contribution per ticker &mdash; realized plus unrealized price movement plus commissions, from <strong>IBKR's Mark-to-Market Performance Summary</strong> or, for Schwab, the <em>Realized Gain/(Loss)</em> column / 1099 Composite plus &Delta;(market value &minus; cost basis) between consecutive month-end holdings. Option P&amp;L and FX translation P&amp;L are <strong>reported separately</strong> in the Options Income and FX sections below &mdash; they are not mixed into stock attribution because option assignment events and currency-translation accounting would distort a per-stock contribution figure. Dividends, interest, lending income, withholding tax and ADR fees are also not attributed here; they appear in their own bars in the Dollar P&amp;L decomposition chart above.
+      </p>
+      {% if schema.include_dollar_amounts %}
+      <p class="footnote">
+        <strong>Ending MV</strong> = total quantity held across accounts &times; the latest observed unit price for that symbol whose snapshot date falls on or before the audit window end ({{ schema.period_end.strftime("%b %d, %Y") }}). <strong>Share of PnL</strong> = position's $ P&amp;L divided by the sum of all stock positions' $ P&amp;L; rows therefore sum to 100% of the stock-attributed total.
+      </p>
+      <p class="footnote">
+        <strong>Total stock-attributed P&amp;L:</strong> ${{ "{:,.0f}".format(schema.total_attributed_pnl) }}<br>
+        <strong>Total option income (writing premium net of BTCs):</strong> ${{ "{:,.0f}".format(schema.total_option_income) }}<br>
+        <strong>Total dollar P&amp;L for the audit window:</strong> ${{ "{:,.0f}".format(schema.kpis.total_pnl) }}.<br>
+        The difference ``Total P&amp;L &minus; Stock attribution &minus; Option income`` is dividends + interest + lending income minus cost drag and FX translation, all of which are bucketed in the Dollar P&amp;L decomposition above.
+      </p>
+      {% else %}
+      <p class="footnote">
+        <strong>Share of PnL</strong> = position's contribution divided by the sum of all stock positions' attributed P&amp;L; rows therefore sum to 100% of the stock-attributed total. Absolute dollar columns are intentionally suppressed in this report (run with <code>include_dollar_amounts=True</code> to surface them).
+      </p>
+      {% endif %}
+      <div class="exec-grid" style="margin-top:14px;">
+        <div>
+          <h3>Top Contributors</h3>
+          <table class="summary">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Description</th>
+                {% if schema.include_dollar_amounts %}<th>$ P&amp;L</th>{% endif %}
+                <th>Share of PnL</th>
+                {% if schema.include_dollar_amounts %}<th>Ending MV</th>{% endif %}
+                <th>Held</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in schema.top_contributors %}
+              <tr>
+                <td><strong>{{ row.symbol }}</strong></td>
+                <td>{{ row.description[:30] }}</td>
+                {% if schema.include_dollar_amounts %}<td class="pos">${{ "{:,.0f}".format(row.dollar_pnl) }}</td>{% endif %}
+                <td class="pos">{{ "{:+.2f}%".format(row.contribution_pct * 100) }}</td>
+                {% if schema.include_dollar_amounts %}<td>${{ "{:,.0f}".format(row.ending_market_value) }}</td>{% endif %}
+                <td>{{ row.first_seen.strftime("%b %Y") }} &rarr; {{ row.last_seen.strftime("%b %Y") }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3>Top Detractors</h3>
+          <table class="summary">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Description</th>
+                {% if schema.include_dollar_amounts %}<th>$ P&amp;L</th>{% endif %}
+                <th>Share of PnL</th>
+                {% if schema.include_dollar_amounts %}<th>Ending MV</th>{% endif %}
+                <th>Held</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in schema.top_detractors %}
+              <tr>
+                <td><strong>{{ row.symbol }}</strong></td>
+                <td>{{ row.description[:30] }}</td>
+                {% if schema.include_dollar_amounts %}<td class="neg">${{ "{:,.0f}".format(row.dollar_pnl) }}</td>{% endif %}
+                <td class="neg">{{ "{:+.2f}%".format(row.contribution_pct * 100) }}</td>
+                {% if schema.include_dollar_amounts %}<td>${{ "{:,.0f}".format(row.ending_market_value) }}</td>{% endif %}
+                <td>{{ row.first_seen.strftime("%b %Y") }} &rarr; {{ row.last_seen.strftime("%b %Y") }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    {# ---------------------- Options Income ---------------------- #}
+    {% if schema.option_income and schema.include_dollar_amounts %}
+    <section>
+      <h2>Options Income by Underlying</h2>
+      <p class="footnote">
+        Per-underlying net premium income from option writing, sourced from <strong>transaction cash flow</strong> on the broker statements. Premium received from short-sale opens (and long-position closes) minus premium paid on buy-to-close transactions. Option <em>assignments</em> are intentionally <strong>not</strong> treated as option-leg losses: at assignment the option simply terminates and the cost flows to the resulting stock-side position at the strike price, so the option leg's net cash flow is the original premium received. (This is why the 1099 Composite's "realized" column on options can look misleading -- it reports an assignment as if it were a buy-to-close at intrinsic value, which conflates option income with stock-side cost basis.)
+      </p>
+      <p class="footnote">
+        <strong>Total net option income across all underlyings:</strong> ${{ "{:,.0f}".format(schema.total_option_income) }}.
+      </p>
+      <div class="chart-card wide" style="margin-top:14px;">
+        {% for chart in schema.charts if chart.key == "option_income_by_underlying" %}
+          {{ chart.html | safe }}
+        {% endfor %}
+      </div>
+      <table class="summary" style="margin-top:14px;">
+        <thead>
+          <tr>
+            <th>Underlying</th>
+            <th>Premium received</th>
+            <th>Premium paid</th>
+            <th>Net</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in schema.option_income %}
+          <tr>
+            <td><strong>{{ row.underlying }}</strong></td>
+            <td class="pos">${{ "{:,.0f}".format(row.premium_received) }}</td>
+            <td class="neg">${{ "{:,.0f}".format(row.premium_paid) }}</td>
+            <td class="{% if row.net >= 0 %}pos{% else %}neg{% endif %}">${{ "{:,.0f}".format(row.net) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% endif %}
+
+    {# ---------------------- Methodology ---------------------- #}
+    <section>
+      <h2>Methodology &amp; Notes</h2>
+      <ul class="notes">
+        <li><strong>TWR</strong> is chain-linked from pooled portfolio monthly returns. Pooled value at each month-end is the sum of every account's interpolated NAV; cash flows are aggregated across accounts.</li>
+        <li><strong>MWR-IRR</strong> is computed via XIRR with each account's first beginning value as an outflow at its inception, all external cash flows as observed, and the pooled terminal value as the terminal inflow.</li>
+        <li><strong>Yearly MWR</strong> uses Modified Dietz over that year's actual window (not annualized) so it is directly comparable with TWR for the same row.</li>
+        <li><strong>Beta / Alpha / IR</strong> are estimated by regressing monthly portfolio returns against the primary benchmark (default: URTH / MSCI World, overridable via the <code>--primary-benchmark</code> CLI flag). They are reported once on the Executive Summary's Key Metrics panel for the full audit window only -- short partial-year windows regress on too few observations to give a stable estimate.</li>
+        <li><strong>Benchmarks</strong> are fetched from yfinance / Stooq, resampled to month-end, and cached to <code>data_cache/benchmarks/</code>. Failures degrade gracefully to the cached series.</li>
+        <li><strong>Country / sector attribution</strong> is not yet implemented &mdash; it requires per-position holdings extraction from broker statements, which is on the roadmap.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

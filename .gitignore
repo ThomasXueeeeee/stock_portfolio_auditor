@@ -1,0 +1,37 @@
+# Broker records and generated outputs
+records/
+data_cache/
+reports/
+*.pdf
+*.PDF
+!tests/fixtures/synthetic/**/*.pdf
+!examples/**/*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Environments
+.venv/
+venv/
+env/
+.conda/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local config
+.spa/
