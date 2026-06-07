@@ -169,9 +169,7 @@ def _covers(series: pd.Series, start: date, end: date, max_staleness_days: int) 
         # narrow to look for gaps -- treat as covered.
         return True
     diffs_days = inside.index.to_series().diff().dt.days.dropna()
-    if (diffs_days > _MAX_INTERNAL_GAP_DAYS).any():
-        return False
-    return True
+    return not (diffs_days > _MAX_INTERNAL_GAP_DAYS).any()
 
 
 def _has_any_overlap(series: pd.Series, start: date, end: date) -> bool:

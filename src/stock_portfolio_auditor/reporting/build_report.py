@@ -226,9 +226,7 @@ def build_report_schema(
     # each account's latest snapshot <= the month-end, so the series
     # smoothly spans the audit window even for accounts (annual IBKR
     # statements) that don't publish a snapshot every month.
-    concentration_snapshots = monthly_concentration_series(
-        ordered, start=start, end=end
-    )
+    concentration_snapshots = monthly_concentration_series(ordered, start=start, end=end)
     concentration_by_year = {
         row.label: row
         for row in yearly_concentration_aggregates(
@@ -247,9 +245,7 @@ def build_report_schema(
     # yearly summary's Turnover column sums these ratios for each
     # calendar year inside the audit window; the Total row /
     # KPI strip divides the sum of yearly ratios by years-in-window.
-    monthly_turnover_series = monthly_two_way_turnover_series(
-        ordered, pooled_periods
-    )
+    monthly_turnover_series = monthly_two_way_turnover_series(ordered, pooled_periods)
 
     yearly_rows = _yearly_summary_rows(
         nav_statements,
@@ -272,9 +268,7 @@ def build_report_schema(
         if primary_benchmark_series is not None
         else pd.Series(dtype=float)
     )
-    beta, alpha, info_ratio = _benchmark_regression(
-        portfolio_monthly, benchmark_monthly
-    )
+    beta, alpha, info_ratio = _benchmark_regression(portfolio_monthly, benchmark_monthly)
 
     kpis = KpiStrip(
         twr=annual_return,
@@ -384,9 +378,7 @@ def _is_nav_bearing(stmt: Statement) -> bool:
     position_contributions where it's the authoritative source for
     per-position realized PnL.
     """
-    if stmt.broker == "schwab" and stmt.frequency == "A":
-        return False
-    return True
+    return not (stmt.broker == "schwab" and stmt.frequency == "A")
 
 
 def _dedupe_schwab_1099_realized(statements: list[Statement]) -> list[Statement]:
@@ -647,9 +639,7 @@ def _average_annual_turnover(
     Total row alongside the rows above it, the average-of-per-year-
     ratios formulation is what they expect.
     """
-    sum_period_ratios = sum(
-        row.turnover for row in yearly_rows if row.label != "Total"
-    )
+    sum_period_ratios = sum(row.turnover for row in yearly_rows if row.label != "Total")
     total_days = (audit_end - audit_start).days + 1
     if total_days <= 0:
         return 0.0
@@ -1021,9 +1011,7 @@ def _build_charts(
             ChartBlock(
                 key="option_income_by_underlying",
                 title="Option Premium Income by Underlying",
-                html=_to_html(
-                    _option_income_chart(option_rows), include_plotlyjs=include_js
-                ),
+                html=_to_html(_option_income_chart(option_rows), include_plotlyjs=include_js),
             )
         )
     if concentration_snapshots:

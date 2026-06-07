@@ -85,9 +85,7 @@ def replay_account_quantities(
         key=lambda s: s.period_end,
     )
     if not snapshots:
-        return ReplayResult(
-            as_of=as_of, quantities={}, currency_by_symbol={}, anchor_date=None
-        )
+        return ReplayResult(as_of=as_of, quantities={}, currency_by_symbol={}, anchor_date=None)
 
     # Anchor selection: prefer the closest snapshot >= as_of so we can
     # reverse a small number of recent trades, falling back to the
@@ -134,18 +132,14 @@ def replay_account_quantities(
         # with a flipped sign to undo it.
         for txn in all_trades:
             if as_of < txn.trade_date <= anchor.period_end:
-                quantities[txn.symbol] = quantities.get(
-                    txn.symbol, Decimal("0")
-                ) - txn.quantity
+                quantities[txn.symbol] = quantities.get(txn.symbol, Decimal("0")) - txn.quantity
                 currencies.setdefault(txn.symbol, txn.currency)
     else:
         # Walk forward: apply trades that happened after the anchor and
         # on or before as_of.
         for txn in all_trades:
             if anchor.period_end < txn.trade_date <= as_of:
-                quantities[txn.symbol] = quantities.get(
-                    txn.symbol, Decimal("0")
-                ) + txn.quantity
+                quantities[txn.symbol] = quantities.get(txn.symbol, Decimal("0")) + txn.quantity
                 currencies.setdefault(txn.symbol, txn.currency)
 
     return ReplayResult(
@@ -165,6 +159,5 @@ def replay_all_accounts(
     for stmt in statements:
         by_account[stmt.account_label].append(stmt)
     return {
-        account: replay_account_quantities(stmts, as_of)
-        for account, stmts in by_account.items()
+        account: replay_account_quantities(stmts, as_of) for account, stmts in by_account.items()
     }

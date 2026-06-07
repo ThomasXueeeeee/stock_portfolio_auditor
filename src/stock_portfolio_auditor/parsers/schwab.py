@@ -617,9 +617,7 @@ def _extract_transactions(
         elif (line.startswith("Sale ") or line.startswith("Purchase ")) and last_dated_prefix:
             # Sibling option trade on the same date as the previous dated
             # row -- prepend the inherited date so the regex anchors fire.
-            txn = _parse_option_transaction(
-                f"{last_dated_prefix} {line}", period_start, period_end
-            )
+            txn = _parse_option_transaction(f"{last_dated_prefix} {line}", period_start, period_end)
         else:
             continue
         if txn is not None:
@@ -807,6 +805,7 @@ def _option_realized_key(underlying: str) -> str:
     reconciliation footnote.
     """
     return f"_OPT_{underlying.upper()}"
+
 
 # Continuation rows for the same Sale/Purchase appear directly below a dated
 # Sale/Purchase line when the disposition spans multiple tax lots. Schwab
@@ -1191,7 +1190,7 @@ def _extract_legacy_investment_detail(
         pending_cb: Decimal | None = None
         pending_symbol: str | None = None
 
-        def _maybe_commit() -> None:
+        def _maybe_commit(section_kind: str = kind) -> None:
             nonlocal pending_qty, pending_mv, pending_cb, pending_symbol
             if (
                 pending_qty is not None
@@ -1202,7 +1201,7 @@ def _extract_legacy_investment_detail(
                 out.append(
                     (
                         pending_symbol,
-                        kind,
+                        section_kind,
                         pending_qty,
                         pending_mv,
                         pending_cb,
@@ -1533,9 +1532,7 @@ def _parse_1099_composite(
         raise ParserError("Could not detect tax year on Schwab 1099 Composite")
     year = int(year_match.group("year"))
     per_symbol = _extract_1099_composite_realized(layout_text)
-    transactions = tuple(
-        _extract_1099_composite_dispositions(layout_text, default_year=year)
-    )
+    transactions = tuple(_extract_1099_composite_dispositions(layout_text, default_year=year))
 
     label = account_label or account_label_from_path(pdf_path)
     raw_hash = hashlib.sha256(raw_text.encode("utf-8", errors="ignore")).hexdigest()
@@ -1596,9 +1593,7 @@ def _normalize_1099_symbol(raw: str) -> str:
     return raw.replace("/", ".").upper()
 
 
-def _extract_1099_composite_dispositions(
-    text: str, *, default_year: int
-) -> list[Transaction]:
+def _extract_1099_composite_dispositions(text: str, *, default_year: int) -> list[Transaction]:
     """Emit one ``Transaction`` per disposition row in the 1099-B section.
 
     Each disposition spans two lines in the layout text:

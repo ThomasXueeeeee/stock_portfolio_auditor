@@ -147,7 +147,9 @@ TotalOptions ($1,730.00) ($2,359.33) $629.33 $0.00A
     assert bn.cost_basis_base == Decimal("-643.3400")
     # Aggregate MV / CB across all three contracts reconciles to the
     # ``TotalOptions`` row Schwab itself prints.
-    total_mv = sum(float(by_symbol[k].market_value_base) for k in ("_OPT_BN", "_OPT_JXN", "_OPT_PDD"))
+    total_mv = sum(
+        float(by_symbol[k].market_value_base) for k in ("_OPT_BN", "_OPT_JXN", "_OPT_PDD")
+    )
     total_cb = sum(float(by_symbol[k].cost_basis_base) for k in ("_OPT_BN", "_OPT_JXN", "_OPT_PDD"))
     assert total_mv == -150 - 825 - 755
     assert total_cb == -643.34 - 496.68 - 1219.31

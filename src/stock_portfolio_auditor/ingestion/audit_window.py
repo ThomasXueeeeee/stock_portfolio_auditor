@@ -64,15 +64,11 @@ def filter_statements_to_window(
     same Statement is also in ``included`` in the latter case).
     """
     if start_date > end_date:
-        raise ValueError(
-            f"Audit start {start_date} is after end {end_date}; supply a sane window."
-        )
+        raise ValueError(f"Audit start {start_date} is after end {end_date}; supply a sane window.")
     included: list[Statement] = []
     excluded: list[tuple[Statement, str]] = []
     for stmt in statements:
-        result = _filter_statement_to_window(
-            stmt, start_date=start_date, end_date=end_date
-        )
+        result = _filter_statement_to_window(stmt, start_date=start_date, end_date=end_date)
         if result is None:
             excluded.append(
                 (
@@ -116,9 +112,7 @@ def _filter_statement_to_window(
     new_holdings = stmt.holdings if snapshot_in_window else ()
     new_cash_balances = stmt.cash_balances if snapshot_in_window else ()
 
-    new_per_symbol, rebuilt = _clip_per_symbol_pnl(
-        stmt, in_window_transactions
-    )
+    new_per_symbol, rebuilt = _clip_per_symbol_pnl(stmt, in_window_transactions)
 
     clipped = stmt.model_copy(
         update={
@@ -158,9 +152,7 @@ def _clip_per_symbol_pnl(
         # tail, but no worse than dropping the statement entirely).
         return dict(stmt.per_symbol_pnl_base), False
 
-    has_disposition_data = any(
-        t.realized_pnl_base is not None for t in stmt.transactions
-    )
+    has_disposition_data = any(t.realized_pnl_base is not None for t in stmt.transactions)
     if not has_disposition_data:
         return dict(stmt.per_symbol_pnl_base), False
 
@@ -168,9 +160,7 @@ def _clip_per_symbol_pnl(
     for txn in in_window_transactions:
         if txn.realized_pnl_base is None or txn.symbol is None:
             continue
-        rebuilt[txn.symbol] = (
-            rebuilt.get(txn.symbol, Decimal("0")) + txn.realized_pnl_base
-        )
+        rebuilt[txn.symbol] = rebuilt.get(txn.symbol, Decimal("0")) + txn.realized_pnl_base
     return rebuilt, True
 
 

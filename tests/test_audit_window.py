@@ -32,9 +32,7 @@ from tests.factories import make_statement
 
 
 def _stmt(start: date, end: date, *, label: str = "acct") -> Statement:
-    return make_statement(
-        account_label=label, start=start, end=end, frequency="M"
-    ).model_copy(
+    return make_statement(account_label=label, start=start, end=end, frequency="M").model_copy(
         update={"beginning_value_base": Decimal("100"), "ending_value_base": Decimal("110")}
     )
 
@@ -200,9 +198,7 @@ def test_partial_overlap_drops_out_of_window_holdings_snapshot() -> None:
 
 def test_invalid_window_raises() -> None:
     with pytest.raises(ValueError, match="after end"):
-        filter_statements_to_window(
-            [], start_date=date(2026, 4, 30), end_date=date(2022, 10, 1)
-        )
+        filter_statements_to_window([], start_date=date(2026, 4, 30), end_date=date(2022, 10, 1))
 
 
 def test_empty_input_returns_empty() -> None:

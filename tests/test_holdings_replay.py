@@ -123,9 +123,7 @@ def test_replay_walks_forward_when_only_past_snapshots_available() -> None:
             ),
         }
     )
-    result = replay_account_quantities(
-        [snap, later_trades_stmt], date(2024, 3, 31)
-    )
+    result = replay_account_quantities([snap, later_trades_stmt], date(2024, 3, 31))
     # By Mar 31, 2024: +25 applied (Feb 15), -10 not yet (Apr 20).
     assert result.quantities == {"AAPL": Decimal("125")}
 
@@ -218,9 +216,7 @@ def test_replay_all_accounts_partitions_by_account_label() -> None:
     ).model_copy(
         update={
             "holdings": (_holding("3347.HK", Decimal("1000"), currency="HKD"),),
-            "transactions": (
-                _trade("3347.HK", Decimal("500"), date(2023, 9, 1), currency="HKD"),
-            ),
+            "transactions": (_trade("3347.HK", Decimal("500"), date(2023, 9, 1), currency="HKD"),),
         }
     )
     results = replay_all_accounts([schwab, ibkr], date(2023, 6, 30))
@@ -240,9 +236,7 @@ def test_replay_returns_empty_when_account_has_no_snapshots() -> None:
         frequency="A",
     ).model_copy(
         update={
-            "transactions": (
-                _trade("AAPL", Decimal("50"), date(2023, 5, 1)),
-            ),
+            "transactions": (_trade("AAPL", Decimal("50"), date(2023, 5, 1)),),
         }
     )
     result = replay_account_quantities([stmt], date(2023, 6, 30))

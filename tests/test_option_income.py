@@ -30,8 +30,8 @@ def test_premium_received_and_paid_aggregate_per_underlying() -> None:
     ``premium_received``; close costs aggregate into ``premium_paid``.
     """
     txns = (
-        _option("_OPT_JXN", Decimal("525")),     # open short, premium received
-        _option("_OPT_JXN", Decimal("-120")),    # buy to close
+        _option("_OPT_JXN", Decimal("525")),  # open short, premium received
+        _option("_OPT_JXN", Decimal("-120")),  # buy to close
         _option("_OPT_DAL", Decimal("596.67")),  # open short, premium received
     )
     stmt = make_statement(
@@ -104,9 +104,7 @@ def test_non_option_transactions_ignored() -> None:
     txns = (
         # Equity buy / sell / dividend / interest -- none of these should
         # contribute to the option income table.
-        make_transaction(date(2025, 1, 5), Decimal("1000")).model_copy(
-            update={"symbol": "AAPL"}
-        ),
+        make_transaction(date(2025, 1, 5), Decimal("1000")).model_copy(update={"symbol": "AAPL"}),
         # Even one with a leading underscore that's not an option pseudo-symbol.
         make_transaction(date(2025, 1, 5), Decimal("100")).model_copy(
             update={"symbol": "_FX_EUR", "kind": AssetKind.FX}

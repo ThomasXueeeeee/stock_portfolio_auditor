@@ -109,17 +109,13 @@ def test_stock_holdings_at_pools_across_accounts() -> None:
         start=date(2025, 3, 1),
         end=date(2025, 3, 31),
         frequency="M",
-    ).model_copy(
-        update={"holdings": (_holding("AAPL", market_value_base=Decimal("400")),)}
-    )
+    ).model_copy(update={"holdings": (_holding("AAPL", market_value_base=Decimal("400")),)})
     ibkr = make_statement(
         account_label="ibkr",
         start=date(2024, 1, 1),
         end=date(2024, 12, 31),
         frequency="A",
-    ).model_copy(
-        update={"holdings": (_holding("MSFT", market_value_base=Decimal("600")),)}
-    )
+    ).model_copy(update={"holdings": (_holding("MSFT", market_value_base=Decimal("600")),)})
     holdings = stock_holdings_at([schwab, ibkr], as_of=date(2025, 3, 31))
     by_symbol = {h.symbol: float(h.market_value_base) for h in holdings}
     assert by_symbol == {"AAPL": 400.0, "MSFT": 600.0}
@@ -147,9 +143,7 @@ def test_monthly_concentration_series_emits_one_snapshot_per_in_window_month() -
             )
         }
     )
-    snaps = monthly_concentration_series(
-        [jan, feb], start=date(2025, 1, 1), end=date(2025, 2, 28)
-    )
+    snaps = monthly_concentration_series([jan, feb], start=date(2025, 1, 1), end=date(2025, 2, 28))
     assert [s.as_of for s in snaps] == [date(2025, 1, 31), date(2025, 2, 28)]
     # Feb skewed more heavily to AAPL -> higher HHI.
     assert snaps[1].hhi > snaps[0].hhi

@@ -284,9 +284,7 @@ def _translate_holdings(
         if mv_rate is None:
             new_holdings.append(holding)
             continue
-        acquisition_date = earliest_dates.get(
-            (stmt.account_label, holding.symbol), stmt.period_end
-        )
+        acquisition_date = earliest_dates.get((stmt.account_label, holding.symbol), stmt.period_end)
         cb_rate = _rate_at(pair_series, acquisition_date) or mv_rate
         mutated = True
         new_holdings.append(_apply_rates(holding, mv_rate=mv_rate, cb_rate=cb_rate))
@@ -332,9 +330,9 @@ def _translate_transactions(
         if txn.fees != 0:
             update["fees"] = (txn.fees * rate_dec).quantize(_DECIMAL_QUANT)
         if txn.realized_pnl_base is not None:
-            update["realized_pnl_base"] = (
-                txn.realized_pnl_base * rate_dec
-            ).quantize(_DECIMAL_QUANT)
+            update["realized_pnl_base"] = (txn.realized_pnl_base * rate_dec).quantize(
+                _DECIMAL_QUANT
+            )
         new_transactions.append(txn.model_copy(update=update))
     return new_transactions, mutated
 

@@ -140,9 +140,7 @@ def stock_holdings_at(statements: list[Statement], as_of: date) -> list[Holding]
     return pooled
 
 
-def concentration_metrics(
-    holdings: list[Holding], *, as_of: date
-) -> ConcentrationSnapshot | None:
+def concentration_metrics(holdings: list[Holding], *, as_of: date) -> ConcentrationSnapshot | None:
     """Compute HHI / effective N / top-N share from a list of holdings.
 
     Non-stock kinds (OPTION, CASH, FX, fixed income) and pseudo-symbol
@@ -250,9 +248,7 @@ def _statements_by_account(
     return out
 
 
-def _find_exact_snapshot(
-    account_stmts: list[Statement], target: date
-) -> Statement | None:
+def _find_exact_snapshot(account_stmts: list[Statement], target: date) -> Statement | None:
     """Return the statement whose ``period_end == target`` and that
     actually publishes ``holdings``; ``None`` otherwise."""
     for stmt in account_stmts:
@@ -261,9 +257,7 @@ def _find_exact_snapshot(
     return None
 
 
-def _accumulate_from_snapshot(
-    stmt: Statement, out: dict[str, Decimal]
-) -> None:
+def _accumulate_from_snapshot(stmt: Statement, out: dict[str, Decimal]) -> None:
     """Sum the snapshot's stock-only ``market_value_base`` into ``out``."""
     for holding in stmt.holdings:
         if holding.kind not in _STOCK_KINDS:
@@ -334,9 +328,7 @@ def _accumulate_from_replay_via_nearest_snapshot(
         out[symbol] += qty * unit
 
 
-def _nearest_snapshot(
-    snapshots: list[Statement], target: date
-) -> Statement | None:
+def _nearest_snapshot(snapshots: list[Statement], target: date) -> Statement | None:
     """Pick the snapshot whose ``period_end`` is closest to ``target``.
 
     Ties favour the future snapshot because the user-visible
@@ -372,9 +364,7 @@ def _build_snapshot(
     total = sum(positive.values())
     if total <= 0:
         return None
-    weights = sorted(
-        (float(v) / float(total) for v in positive.values()), reverse=True
-    )
+    weights = sorted((float(v) / float(total) for v in positive.values()), reverse=True)
     hhi = sum(w * w for w in weights)
     effective_n = (1.0 / hhi) if hhi > 0 else 0.0
     return ConcentrationSnapshot(

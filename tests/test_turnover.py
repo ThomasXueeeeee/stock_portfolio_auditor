@@ -79,9 +79,7 @@ def test_monthly_two_way_turnover_pure_rotation_matches_rotation_rate() -> None:
             ),
         }
     )
-    series = monthly_two_way_turnover_series(
-        [stmt], [_period(date(2024, 1, 31), 1000.0, 1000.0)]
-    )
+    series = monthly_two_way_turnover_series([stmt], [_period(date(2024, 1, 31), 1000.0, 1000.0)])
     assert len(series) == 1
     # (100 + 100) / 2 / 1000 = 0.10
     assert series[0].ratio == pytest.approx(0.10)
@@ -109,9 +107,7 @@ def test_monthly_two_way_turnover_one_way_buying_captures_half_turnover() -> Non
             ),
         }
     )
-    series = monthly_two_way_turnover_series(
-        [stmt], [_period(date(2024, 1, 31), 1000.0, 1000.0)]
-    )
+    series = monthly_two_way_turnover_series([stmt], [_period(date(2024, 1, 31), 1000.0, 1000.0)])
     assert series[0].ratio == pytest.approx(0.10)
     assert series[0].buys_base == 200.0
     assert series[0].sells_base == 0.0
@@ -173,9 +169,7 @@ def test_monthly_two_way_turnover_excludes_options_and_cash() -> None:
             ),
         }
     )
-    series = monthly_two_way_turnover_series(
-        [stmt], [_period(date(2024, 1, 31), 1000.0, 1000.0)]
-    )
+    series = monthly_two_way_turnover_series([stmt], [_period(date(2024, 1, 31), 1000.0, 1000.0)])
     assert series[0].ratio == 0.0
     assert series[0].buys_base == 0.0
     assert series[0].sells_base == 0.0
@@ -199,9 +193,7 @@ def test_monthly_two_way_turnover_reads_schwab_aggregate_when_no_per_trade_rows(
             "stock_sales_base": Decimal("100"),
         }
     )
-    series = monthly_two_way_turnover_series(
-        [stmt], [_period(date(2024, 1, 31), 1000.0, 1000.0)]
-    )
+    series = monthly_two_way_turnover_series([stmt], [_period(date(2024, 1, 31), 1000.0, 1000.0)])
     assert series[0].buys_base == 400.0
     assert series[0].sells_base == 100.0
     # (400 + 100) / 2 / 1000 = 0.25
@@ -227,9 +219,7 @@ def test_monthly_two_way_turnover_statement_aggregate_only_credited_to_exact_mon
             "stock_sales_base": Decimal("5000"),
         }
     )
-    series = monthly_two_way_turnover_series(
-        [stmt], [_period(date(2024, 6, 30), 1000.0, 1000.0)]
-    )
+    series = monthly_two_way_turnover_series([stmt], [_period(date(2024, 6, 30), 1000.0, 1000.0)])
     # Aggregate must NOT contribute -- statement spans 12 months.
     assert series[0].ratio == 0.0
 
@@ -247,9 +237,7 @@ def test_monthly_two_way_turnover_handles_zero_nav() -> None:
             ),
         }
     )
-    series = monthly_two_way_turnover_series(
-        [stmt], [_period(date(2024, 1, 31), 0.0, 0.0)]
-    )
+    series = monthly_two_way_turnover_series([stmt], [_period(date(2024, 1, 31), 0.0, 0.0)])
     assert series[0].ratio == 0.0
 
 
@@ -313,9 +301,7 @@ def test_yearly_turnover_from_monthly_sums_in_window_months() -> None:
         # Out of window: 2025 month is dropped.
         _MonthlyTurnoverFactory(date(2025, 3, 31), 1.00),
     ]
-    yearly = yearly_turnover_from_monthly(
-        series, start=date(2024, 1, 1), end=date(2024, 12, 31)
-    )
+    yearly = yearly_turnover_from_monthly(series, start=date(2024, 1, 1), end=date(2024, 12, 31))
     assert yearly == pytest.approx(0.35)
 
 
@@ -328,9 +314,7 @@ def test_yearly_turnover_from_monthly_partial_year_returns_partial_months_only()
         _MonthlyTurnoverFactory(date(2026, 4, 30), 0.07),
         _MonthlyTurnoverFactory(date(2026, 5, 31), 1.00),  # Out of window
     ]
-    yearly = yearly_turnover_from_monthly(
-        series, start=date(2026, 1, 1), end=date(2026, 4, 30)
-    )
+    yearly = yearly_turnover_from_monthly(series, start=date(2026, 1, 1), end=date(2026, 4, 30))
     assert yearly == pytest.approx(0.30)
 
 

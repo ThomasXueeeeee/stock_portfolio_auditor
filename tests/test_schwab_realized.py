@@ -80,9 +80,7 @@ def test_realized_purchase_close_short_routed_to_option_pseudo_symbol() -> None:
     the underlying stock ticker — otherwise BN's stock attribution would be
     distorted by option close P&L.
     """
-    text = (
-        "04/17 Purchase BN04/17/2025 PUTBROOKFIELDCORP $45 10.0000 0.3000 6.66 (306.66) 330.02,(ST)\n"
-    )
+    text = "04/17 Purchase BN04/17/2025 PUTBROOKFIELDCORP $45 10.0000 0.3000 6.66 (306.66) 330.02,(ST)\n"
     pnl = _extract_realized_pnl(text)
     assert pnl == {"_OPT_BN": Decimal("330.02")}
     assert "BN" not in pnl

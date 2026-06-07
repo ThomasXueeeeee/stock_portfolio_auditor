@@ -15,11 +15,15 @@ from datetime import date
 from decimal import Decimal
 
 import pandas as pd
-
 import pytest
 
 from stock_portfolio_auditor.domain.errors import MissingFxRateError
-from stock_portfolio_auditor.domain.models import AssetKind, Holding, Statement, Transaction
+from stock_portfolio_auditor.domain.models import (
+    AssetKind,
+    Holding,
+    Statement,
+    Transaction,
+)
 from stock_portfolio_auditor.ingestion.fx_reconstruction import fx_convert_statements
 from stock_portfolio_auditor.pricing.providers.base import PriceProvider
 

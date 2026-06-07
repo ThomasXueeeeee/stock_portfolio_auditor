@@ -166,10 +166,7 @@ def monthly_two_way_turnover_series(
                 buys += abs(stmt.stock_purchases_base)
                 sells += abs(stmt.stock_sales_base)
         avg_nav = (period.beginning_value + period.ending_value) / 2.0
-        if avg_nav <= 0:
-            ratio = 0.0
-        else:
-            ratio = (float(buys) + float(sells)) / 2.0 / avg_nav
+        ratio = 0.0 if avg_nav <= 0 else (float(buys) + float(sells)) / 2.0 / avg_nav
         out.append(
             MonthlyTurnover(
                 period_end=month_end,
@@ -238,10 +235,7 @@ def portfolio_turnover(
                 sales += amount
 
     lesser = min(float(purchases), float(sales))
-    if average_nav <= 0:
-        ratio = 0.0
-    else:
-        ratio = lesser / average_nav
+    ratio = 0.0 if average_nav <= 0 else lesser / average_nav
     if annualise and ratio > 0:
         window_days = (end - start).days + 1
         if window_days > 0:
