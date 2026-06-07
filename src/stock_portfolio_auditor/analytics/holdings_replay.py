@@ -131,16 +131,22 @@ def replay_account_quantities(
         # or before the anchor. The trade's signed quantity is added
         # with a flipped sign to undo it.
         for txn in all_trades:
+            symbol = txn.symbol
+            if symbol is None:
+                continue
             if as_of < txn.trade_date <= anchor.period_end:
-                quantities[txn.symbol] = quantities.get(txn.symbol, Decimal("0")) - txn.quantity
-                currencies.setdefault(txn.symbol, txn.currency)
+                quantities[symbol] = quantities.get(symbol, Decimal("0")) - txn.quantity
+                currencies.setdefault(symbol, txn.currency)
     else:
         # Walk forward: apply trades that happened after the anchor and
         # on or before as_of.
         for txn in all_trades:
+            symbol = txn.symbol
+            if symbol is None:
+                continue
             if anchor.period_end < txn.trade_date <= as_of:
-                quantities[txn.symbol] = quantities.get(txn.symbol, Decimal("0")) + txn.quantity
-                currencies.setdefault(txn.symbol, txn.currency)
+                quantities[symbol] = quantities.get(symbol, Decimal("0")) + txn.quantity
+                currencies.setdefault(symbol, txn.currency)
 
     return ReplayResult(
         as_of=as_of,

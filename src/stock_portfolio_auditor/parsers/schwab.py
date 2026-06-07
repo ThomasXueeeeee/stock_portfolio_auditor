@@ -1190,7 +1190,7 @@ def _extract_legacy_investment_detail(
         pending_cb: Decimal | None = None
         pending_symbol: str | None = None
 
-        def _maybe_commit(section_kind: str = kind) -> None:
+        def _maybe_commit(section_kind: AssetKind = kind) -> None:
             nonlocal pending_qty, pending_mv, pending_cb, pending_symbol
             if (
                 pending_qty is not None

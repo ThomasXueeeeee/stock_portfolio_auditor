@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Mapping
 from datetime import date, datetime
 from typing import cast
 
@@ -24,6 +25,7 @@ from stock_portfolio_auditor.analytics import (
     total_cost_drag_bps,
 )
 from stock_portfolio_auditor.analytics.concentration import (
+    YearlyConcentration,
     monthly_concentration_series,
     yearly_concentration_aggregates,
 )
@@ -509,7 +511,7 @@ def _yearly_summary_rows(
     audit_start: date,
     audit_end: date,
     *,
-    concentration_by_label: dict[str, object],
+    concentration_by_label: Mapping[str, YearlyConcentration],
     monthly_turnover_series: list,  # type: ignore[type-arg]
 ) -> list[YearlySummaryRow]:
     """Build per-year YearlySummaryRow entries plus a Total row.
@@ -555,8 +557,8 @@ def _yearly_summary_rows(
                 best_month=risk["best_month"],
                 worst_month=risk["worst_month"],
                 turnover=year_turnover,
-                avg_effective_n=getattr(concentration_row, "avg_effective_n", 0.0),
-                avg_top5_share=getattr(concentration_row, "avg_top5_share", 0.0),
+                avg_effective_n=concentration_row.avg_effective_n if concentration_row else 0.0,
+                avg_top5_share=concentration_row.avg_top5_share if concentration_row else 0.0,
                 price_bps=bps["price"],
                 dividend_bps=bps["dividends"],
                 option_bps=bps["options"],
