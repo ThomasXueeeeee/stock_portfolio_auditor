@@ -49,7 +49,7 @@ dependencies = [
   "streamlit>=1,<2",
   "tomli>=2,<3",
   "typer>=0.25,<1",
-  "yfinance>=0.2,<1",
+  "yfinance>=0.2,<2",
 ]
 
 [project.optional-dependencies]
